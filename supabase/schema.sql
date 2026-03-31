@@ -28,7 +28,7 @@ create index on public.trips(date);
 create index on public.trips(name);
 
 -- Full-text search on trip name
-create index on public.trips using gin(to_tsvector('czech', name));
+create index on public.trips using gin(to_tsvector('simple', name));
 
 -- Enable RLS
 alter table public.trips enable row level security;
