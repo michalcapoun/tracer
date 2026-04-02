@@ -175,9 +175,11 @@ async function signOut() {
         <div class="trip-info">
           <div class="trip-text">
             <span class="trip-name">{{ trip.name }}</span>
-            <span v-if="trip.date" class="trip-date">{{ formatDate(trip.date) }}</span>
+            <div class="trip-meta">
+              <span v-if="trip.date" class="trip-date">{{ formatDate(trip.date) }}</span>
+              <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
+            </div>
           </div>
-          <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
         </div>
         <div class="card-actions" @click.stop>
           <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
@@ -202,9 +204,11 @@ async function signOut() {
             <div class="trip-info">
               <div class="trip-text">
                 <span class="trip-name">{{ trip.name }}</span>
-                <span class="trip-date">{{ formatDate(trip.date!) }}</span>
+                <div class="trip-meta">
+                  <span class="trip-date">{{ formatDate(trip.date!) }}</span>
+                  <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
+                </div>
               </div>
-              <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
             </div>
             <div class="card-actions" @click.stop>
               <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
@@ -435,6 +439,12 @@ async function signOut() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.trip-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .trip-date {
