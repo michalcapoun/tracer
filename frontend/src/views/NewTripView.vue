@@ -13,6 +13,7 @@ const form = ref({
 })
 const saving = ref(false)
 const nameError = ref('')
+const distanceError = ref('')
 const mapyLinkError = ref(false)
 
 function validateMapyLink(value: string): boolean {
@@ -27,8 +28,11 @@ function validateMapyLink(value: string): boolean {
 
 async function save() {
   nameError.value = form.value.name.trim() ? '' : 'Název výletu je povinný.'
+  distanceError.value = form.value.total_distance_km !== '' && +form.value.total_distance_km <= 0
+    ? 'Vzdálenost musí být kladné číslo.'
+    : ''
   mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
-  if (nameError.value || mapyLinkError.value) return
+  if (nameError.value || distanceError.value || mapyLinkError.value) return
   saving.value = true
   try {
     await tripsApi.create({
@@ -89,7 +93,7 @@ async function save() {
         </div>
         <div class="field">
           <label>Vzdálenost</label>
-          <div class="input-with-unit">
+          <div class="input-with-unit" :class="{ 'input-error': distanceError }">
             <input
               v-model="form.total_distance_km"
               type="number"
@@ -97,9 +101,11 @@ async function save() {
               min="0"
               placeholder="0.0"
               max="9999"
+              @input="distanceError = ''"
             />
             <span class="unit">km</span>
           </div>
+          <span v-if="distanceError" class="error">{{ distanceError }}</span>
         </div>
       </div>
 

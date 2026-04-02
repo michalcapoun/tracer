@@ -39,7 +39,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 <template>
   <div class="page">
     <div class="card">
-      <h1 class="logo">Tracer</h1>
+      <h1 class="logo">TRACER</h1>
 
       <form @submit.prevent="signIn">
         <input
