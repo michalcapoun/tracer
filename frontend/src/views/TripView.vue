@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tripsApi, type Trip } from '../lib/api'
 import { useTripsStore } from '../stores/trips'
@@ -32,9 +32,11 @@ const form = ref({
   mapy_link: '',
 })
 
-onMounted(async () => {
+async function loadTrip(id: string) {
+  trip.value = null
+  notFound.value = false
   try {
-    trip.value = await tripsApi.getById(route.params.id as string)
+    trip.value = await tripsApi.getById(id)
   } catch {
     notFound.value = true
     return
@@ -45,7 +47,10 @@ onMounted(async () => {
     total_distance_km: trip.value.total_distance_km ?? '',
     mapy_link: trip.value.mapy_link ?? '',
   }
-})
+}
+
+onMounted(() => loadTrip(route.params.id as string))
+watch(() => route.params.id, (id) => { if (id) loadTrip(id as string) })
 
 async function save() {
   if (!trip.value) return
