@@ -13,6 +13,7 @@ const store = useTripsStore()
 const tab = ref<Tab>('planned')
 const search = ref('')
 const toast = ref<{ message: string; type: 'success' | 'danger' } | null>(null)
+const userEmail = ref('')
 let toastTimer: ReturnType<typeof setTimeout>
 
 function showToast(message: string, type: 'success' | 'danger') {
@@ -21,7 +22,10 @@ function showToast(message: string, type: 'success' | 'danger') {
   toastTimer = setTimeout(() => { toast.value = null }, 3000)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const { data } = await supabase.auth.getUser()
+  userEmail.value = data.user?.email ?? ''
+
   if (route.query.tab === 'history') tab.value = 'history'
   if (route.query.tab === 'trash') tab.value = 'trash'
   if (route.query.created === '1') {
@@ -110,6 +114,7 @@ async function signOut() {
     <header class="top-bar">
       <h1 class="logo">Tracer</h1>
       <div class="top-actions">
+        <span v-if="userEmail" class="user-email">{{ userEmail }}</span>
         <button class="btn-primary" @click="router.push('/trip/new')">+ Nový výlet</button>
         <button class="btn-signout" @click="signOut">Odhlásit</button>
       </div>
@@ -244,6 +249,12 @@ async function signOut() {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.user-email {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-right: 4px;
 }
 
 .btn-signout {
