@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(git push*)",
+            "prompt": "Before this git push, check if README.md needs updating based on recent changes. Run `git log --oneline -10` to see recent commits, then read README.md. If the README is outdated — missing new features, wrong descriptions, or stale instructions — update it and commit the changes with message 'docs: update README'. If README is already up to date, do nothing and let the push proceed.",
+            "timeout": 120,
+            "statusMessage": "Checking README..."
+          }
+        ]
+      }
+    ]
+  }
+}
