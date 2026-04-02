@@ -1,34 +1,34 @@
 import { supabase } from './supabase'
 
-export interface Waypoint {
-  id?: string
-  trip_id?: string
-  name: string
-  lat: number
-  lng: number
-  order: number
-  distance_to_next_km?: number | null
-  notes?: string | null
-  mapy_place_id?: string | null
-}
-
 export interface Trip {
   id: string
   name: string
-  description?: string | null
   date?: string | null
   total_distance_km?: number | null
-  total_duration_min?: number | null
+  mapy_link?: string | null
   created_at: string
-  waypoints: Waypoint[]
+  deleted_at?: string | null
 }
 
 export const tripsApi = {
   getAll: async (): Promise<Trip[]> => {
     const { data, error } = await supabase
       .from('trips')
-      .select('*, waypoints(*)')
+      .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  },
+
+  getTrash: async (): Promise<Trip[]> => {
+    const expiry = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data, error } = await supabase
+      .from('trips')
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .gte('deleted_at', expiry)
+      .order('deleted_at', { ascending: false })
     if (error) throw error
     return data
   },
@@ -36,7 +36,7 @@ export const tripsApi = {
   getById: async (id: string): Promise<Trip> => {
     const { data, error } = await supabase
       .from('trips')
-      .select('*, waypoints(*)')
+      .select('*')
       .eq('id', id)
       .single()
     if (error) throw error
@@ -45,28 +45,16 @@ export const tripsApi = {
 
   create: async (payload: {
     name: string
-    description?: string | null
     date?: string | null
     total_distance_km?: number | null
-    total_duration_min?: number | null
-    waypoints: Omit<Waypoint, 'id' | 'trip_id'>[]
+    mapy_link?: string | null
   }): Promise<Trip> => {
-    const { waypoints, ...tripData } = payload
-
-    const { data: trip, error: tripError } = await supabase
+    const { data: trip, error } = await supabase
       .from('trips')
-      .insert(tripData)
+      .insert(payload)
       .select()
       .single()
-    if (tripError) throw tripError
-
-    if (waypoints.length > 0) {
-      const { error: wpError } = await supabase
-        .from('waypoints')
-        .insert(waypoints.map((w) => ({ ...w, trip_id: trip.id })))
-      if (wpError) throw wpError
-    }
-
+    if (error) throw error
     return trip
   },
 
@@ -76,6 +64,16 @@ export const tripsApi = {
   },
 
   delete: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('trips').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+    if (error) throw error
+  },
+
+  restore: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('trips').update({ deleted_at: null }).eq('id', id)
+    if (error) throw error
+  },
+
+  permanentDelete: async (id: string): Promise<void> => {
     const { error } = await supabase.from('trips').delete().eq('id', id)
     if (error) throw error
   },

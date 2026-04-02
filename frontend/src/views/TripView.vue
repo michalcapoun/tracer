@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tripsApi, type Trip } from '../lib/api'
 import { useTripsStore } from '../stores/trips'
@@ -9,43 +9,92 @@ const router = useRouter()
 const store = useTripsStore()
 
 const trip = ref<Trip | null>(null)
-const editingName = ref(false)
-const nameInput = ref('')
+const notFound = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
+const mapyLinkError = ref(false)
 
-onMounted(async () => {
-  trip.value = await tripsApi.getById(route.params.id as string)
-  nameInput.value = trip.value.name
-})
-
-async function saveName() {
-  if (!trip.value || !nameInput.value.trim()) return
-  await tripsApi.update(trip.value.id, { name: nameInput.value.trim() })
-  trip.value.name = nameInput.value.trim()
-  editingName.value = false
+function validateMapyLink(value: string): boolean {
+  if (!value.trim()) return true
+  try {
+    const host = new URL(value.trim()).hostname
+    return host.endsWith('mapy.cz') || host.endsWith('mapy.com')
+  } catch {
+    return false
+  }
 }
 
-async function setDate(date: string | null) {
-  if (!trip.value) return
+const form = ref({
+  name: '',
+  date: '',
+  total_distance_km: '' as number | '',
+  mapy_link: '',
+})
+
+onMounted(async () => {
+  try {
+    trip.value = await tripsApi.getById(route.params.id as string)
+  } catch {
+    notFound.value = true
+    return
+  }
+  form.value = {
+    name: trip.value.name,
+    date: trip.value.date ?? '',
+    total_distance_km: trip.value.total_distance_km ?? '',
+    mapy_link: trip.value.mapy_link ?? '',
+  }
+})
+
+
+const isDirty = computed(() => {
+  if (!trip.value) return false
+  return (
+    form.value.name.trim() !== trip.value.name ||
+    (form.value.date || null) !== trip.value.date ||
+    (form.value.total_distance_km !== '' ? +form.value.total_distance_km : null) !== trip.value.total_distance_km ||
+    (form.value.mapy_link.trim() || null) !== trip.value.mapy_link
+  )
+})
+
+async function save() {
+  if (!trip.value || !form.value.name.trim()) return
+  mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
+  if (mapyLinkError.value) return
   saving.value = true
-  await tripsApi.update(trip.value.id, { date })
-  trip.value.date = date
-  saving.value = false
+  try {
+    const updates = {
+      name: form.value.name.trim(),
+      date: form.value.date || null,
+      total_distance_km: form.value.total_distance_km !== '' ? +form.value.total_distance_km : null,
+      mapy_link: form.value.mapy_link.trim() || null,
+    }
+    await tripsApi.update(trip.value.id, updates)
+    const today = new Date().toISOString().slice(0, 10)
+    const isHistory = !!updates.date && updates.date <= today
+    router.push(isHistory ? '/?tab=history' : '/?tab=planned')
+  } finally {
+    saving.value = false
+  }
 }
 
 async function duplicate() {
   if (!trip.value) return
-  await store.duplicate(trip.value.id)
-  router.push('/')
+  const newId = await store.duplicate(trip.value.id)
+  router.push(newId ? `/trip/${newId}` : '/')
 }
 
 async function deleteTrip() {
   if (!trip.value) return
-  if (!confirm(`Smazat výlet "${trip.value.name}"?`)) return
-  deleting.value = true
+deleting.value = true
+  const wasHistory = trip.value.date && trip.value.date <= new Date().toISOString().slice(0, 10)
   await store.remove(trip.value.id)
-  router.push('/')
+  router.push(wasHistory ? '/?tab=history&deleted=1' : '/?tab=planned&deleted=1')
+}
+
+function openInMapy() {
+  if (!trip.value?.mapy_link) return
+  window.open(trip.value.mapy_link, '_blank')
 }
 
 function formatDate(date: string) {
@@ -54,77 +103,53 @@ function formatDate(date: string) {
 </script>
 
 <template>
-  <div v-if="!trip" class="loading">Načítám…</div>
+  <div v-if="notFound" class="loading">Výlet nebyl nalezen. <button class="back" @click="router.push('/')">← Zpět na seznam</button></div>
+  <div v-else-if="!trip" class="loading">Načítám…</div>
 
   <div v-else class="page">
     <header class="top-bar">
-      <button class="back" @click="router.push('/')">← Zpět</button>
-      <div class="trip-title">
-        <template v-if="editingName">
-          <input
-            v-model="nameInput"
-            class="name-input"
-            @keyup.enter="saveName"
-            @keyup.escape="editingName = false"
-            autofocus
-          />
-          <button class="btn-small" @click="saveName">Uložit</button>
-          <button class="btn-small muted" @click="editingName = false">Zrušit</button>
-        </template>
-        <template v-else>
-          <h1 class="trip-name">{{ trip.name }}</h1>
-          <button class="btn-small muted" @click="editingName = true">Přejmenovat</button>
-        </template>
-      </div>
+      <button class="back" @click="router.push(trip.date && trip.date <= new Date().toISOString().slice(0, 10) ? '/?tab=history' : '/?tab=planned')">← Zpět</button>
       <div class="header-actions">
-        <button class="btn-small" @click="duplicate">Kopírovat výlet</button>
+        <button class="btn-small" @click="duplicate">Kopírovat</button>
         <button class="btn-small danger" :disabled="deleting" @click="deleteTrip">Smazat</button>
       </div>
     </header>
 
     <div class="content">
       <div class="meta-card">
-        <div class="meta-row">
-          <span class="meta-label">Datum výletu</span>
-          <div class="meta-value">
-            <input
-              type="date"
-              :value="trip.date ?? ''"
-              class="date-input"
-              @change="setDate(($event.target as HTMLInputElement).value || null)"
-            />
-            <span v-if="trip.date" class="date-text">{{ formatDate(trip.date) }}</span>
-            <span v-else class="muted">plánovaný</span>
+        <div class="field">
+          <label>Název výletu</label>
+          <input v-model="form.name" type="text" class="input" maxlength="50" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Datum výletu</label>
+            <input v-model="form.date" type="date" class="input" />
+            <span class="hint">Bez data = plánovaný výlet</span>
+          </div>
+          <div class="field">
+            <label>Vzdálenost</label>
+            <div class="input-with-unit">
+              <input v-model="form.total_distance_km" type="number" step="0.1" min="0" max="9999" placeholder="—" class="input" />
+              <span class="unit">km</span>
+            </div>
           </div>
         </div>
-        <div class="meta-row" v-if="trip.total_distance_km">
-          <span class="meta-label">Celkem</span>
-          <span class="meta-value">{{ trip.total_distance_km }} km</span>
-        </div>
-        <div class="meta-row" v-if="trip.total_duration_min">
-          <span class="meta-label">Odhadovaný čas</span>
-          <span class="meta-value">{{ Math.floor(trip.total_duration_min / 60) }}h {{ trip.total_duration_min % 60 }}min</span>
-        </div>
-        <div class="meta-row" v-if="trip.description">
-          <span class="meta-label">Popis</span>
-          <span class="meta-value">{{ trip.description }}</span>
+        <div class="field">
+          <label>Link Mapy.com</label>
+          <input v-model="form.mapy_link" type="text" placeholder="https://mapy.cz/s/..." class="input" :class="{ 'input-error': mapyLinkError }" @input="mapyLinkError = false" />
+          <span v-if="mapyLinkError" class="error">Zadej platný odkaz z mapy.cz nebo mapy.com.</span>
         </div>
       </div>
 
-      <h2 class="section-title">Trasa ({{ trip.waypoints.length }} míst)</h2>
-
-      <ol class="waypoint-list">
-        <li v-for="(wp, i) in trip.waypoints.sort((a, b) => a.order - b.order)" :key="wp.id" class="waypoint-item">
-          <div class="wp-order">{{ i + 1 }}</div>
-          <div class="wp-info">
-            <span class="wp-name">{{ wp.name }}</span>
-            <span v-if="wp.notes" class="wp-notes">{{ wp.notes }}</span>
-          </div>
-          <span v-if="wp.distance_to_next_km && i < trip.waypoints.length - 1" class="wp-dist">
-            {{ wp.distance_to_next_km }} km →
-          </span>
-        </li>
-      </ol>
+      <div class="actions">
+        <button class="btn-primary" :disabled="saving || !isDirty || !form.name.trim()" @click="save">
+          {{ saving ? 'Ukládám…' : 'Uložit změny' }}
+        </button>
+        <button v-if="trip.mapy_link" class="btn-mapy" @click="openInMapy">
+          Přeplánovat v Mapy.com →
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -144,41 +169,16 @@ function formatDate(date: string) {
 
 .top-bar {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
-  flex-wrap: wrap;
 }
 
 .back {
   color: var(--color-text-muted);
   font-size: 13px;
-  padding-top: 4px;
 }
 .back:hover { color: var(--color-text); }
-
-.trip-title {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.trip-name {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.name-input {
-  font-size: 18px;
-  font-weight: 600;
-  border: none;
-  border-bottom: 2px solid var(--color-primary);
-  outline: none;
-  background: transparent;
-  padding-bottom: 2px;
-}
 
 .header-actions {
   display: flex;
@@ -192,7 +192,6 @@ function formatDate(date: string) {
   border-radius: var(--radius);
 }
 .btn-small:hover { background: var(--color-bg); }
-.btn-small.muted { color: var(--color-text-muted); }
 .btn-small.danger { color: var(--color-danger); border-color: var(--color-danger); }
 .btn-small.danger:hover { background: #fdf2f2; }
 .btn-small:disabled { opacity: 0.5; cursor: default; }
@@ -200,7 +199,7 @@ function formatDate(date: string) {
 .content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .meta-card {
@@ -210,100 +209,96 @@ function formatDate(date: string) {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.meta-label {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  width: 140px;
-  flex-shrink: 0;
-}
-
-.meta-value {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.date-input {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 4px 8px;
-  font-size: 13px;
-  outline: none;
-  cursor: pointer;
-}
-.date-input:focus { border-color: var(--color-primary); }
-
-.date-text {
-  font-size: 14px;
-  color: var(--color-text);
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.waypoint-list {
-  list-style: none;
+.field {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
 }
 
-.waypoint-item {
+.field-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--color-surface);
+  gap: 16px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.input {
+  padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 10px 14px;
+  background: var(--color-bg);
+  font-size: 14px;
+  outline: none;
+  width: 100%;
 }
+.input:focus { border-color: var(--color-primary); }
+.input-error { border-color: var(--color-danger) !important; }
+.error { font-size: 12px; color: var(--color-danger); }
 
-.wp-order {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
+.input-with-unit {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  overflow: hidden;
 }
-
-.wp-info {
+.input-with-unit:focus-within { border-color: var(--color-primary); }
+.input-with-unit .input {
+  border: none;
+  border-radius: 0;
   flex: 1;
+}
+.input-with-unit .input:focus { border-color: transparent; }
+
+.unit {
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
+  line-height: 36px;
+}
+
+.actions {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
-.wp-name { font-size: 14px; }
-
-.wp-notes {
-  font-size: 12px;
-  color: var(--color-text-muted);
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
 }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: default; }
 
-.wp-dist {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  white-space: nowrap;
+
+.btn-mapy {
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
 }
-
-.muted { color: var(--color-text-muted); }
+.btn-mapy:hover { background: #f0faf4; }
 </style>

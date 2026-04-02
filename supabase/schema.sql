@@ -6,6 +6,7 @@ create table public.trips (
   date               date,
   total_distance_km  float,
   total_duration_min int,
+  mapy_link          text,
   created_at         timestamptz default now()
 );
 
