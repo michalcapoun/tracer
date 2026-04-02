@@ -12,6 +12,7 @@ const trip = ref<Trip | null>(null)
 const notFound = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
+const nameError = ref('')
 const mapyLinkError = ref(false)
 
 function validateMapyLink(value: string): boolean {
@@ -46,20 +47,11 @@ onMounted(async () => {
   }
 })
 
-const isDirty = computed(() => {
-  if (!trip.value) return false
-  return (
-    form.value.name.trim() !== trip.value.name ||
-    (form.value.date || null) !== trip.value.date ||
-    (form.value.total_distance_km !== '' ? +form.value.total_distance_km : null) !== trip.value.total_distance_km ||
-    (form.value.mapy_link.trim() || null) !== trip.value.mapy_link
-  )
-})
-
 async function save() {
-  if (!trip.value || !form.value.name.trim()) return
+  if (!trip.value) return
+  nameError.value = form.value.name.trim() ? '' : 'Název výletu je povinný.'
   mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
-  if (mapyLinkError.value) return
+  if (nameError.value || mapyLinkError.value) return
   saving.value = true
   try {
     const updates = {
@@ -118,7 +110,8 @@ function openInMapy() {
       <div class="meta-card">
         <div class="field">
           <label>Název výletu</label>
-          <input v-model="form.name" type="text" class="input" maxlength="50" />
+          <input v-model="form.name" type="text" class="input" maxlength="50" :class="{ 'input-error': nameError }" @input="nameError = ''" />
+          <span v-if="nameError" class="error">{{ nameError }}</span>
         </div>
         <div class="field-row">
           <div class="field">
@@ -142,7 +135,7 @@ function openInMapy() {
       </div>
 
       <div class="actions">
-        <button class="btn-primary" :disabled="saving || !isDirty || !form.name.trim()" @click="save">
+        <button class="btn-primary" :disabled="saving" @click="save">
           {{ saving ? 'Ukládám…' : 'Uložit změny' }}
         </button>
         <button v-if="trip.mapy_link" class="btn-mapy" @click="openInMapy">

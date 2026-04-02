@@ -12,6 +12,7 @@ const form = ref({
   total_distance_km: '' as number | '',
 })
 const saving = ref(false)
+const nameError = ref('')
 const mapyLinkError = ref(false)
 
 function validateMapyLink(value: string): boolean {
@@ -25,9 +26,9 @@ function validateMapyLink(value: string): boolean {
 }
 
 async function save() {
-  if (!form.value.name.trim()) return
+  nameError.value = form.value.name.trim() ? '' : 'Název výletu je povinný.'
   mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
-  if (mapyLinkError.value) return
+  if (nameError.value || mapyLinkError.value) return
   saving.value = true
   try {
     await tripsApi.create({
@@ -72,10 +73,12 @@ async function save() {
           v-model="form.name"
           type="text"
           placeholder="Název výletu"
-          required
           maxlength="50"
           autocomplete="off"
+          :class="{ 'input-error': nameError }"
+          @input="nameError = ''"
         />
+        <span v-if="nameError" class="error">{{ nameError }}</span>
       </div>
 
       <div class="field-row">
@@ -100,7 +103,7 @@ async function save() {
         </div>
       </div>
 
-      <button type="submit" class="btn-primary" :disabled="saving || !form.name.trim()">
+      <button type="submit" class="btn-primary" :disabled="saving">
         {{ saving ? 'Ukládám…' : 'Uložit výlet' }}
       </button>
     </form>
