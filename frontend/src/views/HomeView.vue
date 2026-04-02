@@ -11,6 +11,10 @@ const route = useRoute()
 const store = useTripsStore()
 
 const tab = ref<Tab>('planned')
+
+watch(tab, (newTab) => {
+  router.replace({ query: { tab: newTab } })
+})
 const search = ref('')
 const toast = ref<{ message: string; type: 'success' | 'danger' } | null>(null)
 const userEmail = ref('')
