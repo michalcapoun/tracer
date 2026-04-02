@@ -10,7 +10,9 @@ const router = useRouter()
 const route = useRoute()
 const store = useTripsStore()
 
-const tab = ref<Tab>('planned')
+const validTabs: Tab[] = ['planned', 'history', 'trash']
+const initialTab = route.query.tab as Tab
+const tab = ref<Tab>(validTabs.includes(initialTab) ? initialTab : 'planned')
 
 watch(tab, (newTab) => {
   router.replace({ query: { tab: newTab } })
@@ -35,8 +37,6 @@ onMounted(async () => {
   const { data } = await supabase.auth.getUser()
   userEmail.value = data.user?.email ?? ''
 
-  if (route.query.tab === 'history') tab.value = 'history'
-  if (route.query.tab === 'trash') tab.value = 'trash'
   if (route.query.created === '1') {
     showToast('Výlet byl uložen.', 'success')
     router.replace({ query: { tab: route.query.tab } })
