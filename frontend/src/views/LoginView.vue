@@ -7,18 +7,27 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
-const error = ref('')
+const emailError = ref('')
+const passwordError = ref('')
 const demoLoading = ref(false)
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 async function signIn() {
-  if (!email.value.trim() || !password.value) return
+  emailError.value = !email.value.trim()
+    ? 'Email je povinný.'
+    : !isValidEmail(email.value) ? 'Zadej platnou emailovou adresu.' : ''
+  passwordError.value = password.value ? '' : 'Heslo je povinné.'
+  if (emailError.value || passwordError.value) return
+
   loading.value = true
-  error.value = ''
   const { error: err } = await supabase.auth.signInWithPassword({
     email: email.value.trim(),
     password: password.value,
   })
-  if (err) error.value = 'Nesprávný email nebo heslo.'
+  if (err) passwordError.value = 'Nesprávný email nebo heslo.'
   loading.value = false
 }
 
@@ -42,24 +51,31 @@ supabase.auth.onAuthStateChange((event, session) => {
       <h1 class="logo">TRACER</h1>
 
       <form @submit.prevent="signIn">
-        <input
-          v-model="email"
-          type="email"
-          placeholder="email@example.com"
-          class="input"
-          autocomplete="email"
-          required
-        />
-        <input
-          v-model="password"
-          type="password"
-          placeholder="Heslo"
-          class="input"
-          autocomplete="current-password"
-          required
-        />
-        <p v-if="error" class="error">{{ error }}</p>
-        <button type="submit" class="btn-primary" :disabled="loading || !email.trim() || !password">
+        <div class="field">
+          <input
+            v-model="email"
+            type="text"
+            placeholder="email@example.com"
+            class="input"
+            autocomplete="email"
+            :class="{ 'input-error': emailError }"
+            @input="emailError = ''"
+          />
+          <span v-if="emailError" class="error">{{ emailError }}</span>
+        </div>
+        <div class="field">
+          <input
+            v-model="password"
+            type="password"
+            placeholder="Heslo"
+            class="input"
+            autocomplete="current-password"
+            :class="{ 'input-error': passwordError }"
+            @input="passwordError = ''"
+          />
+          <span v-if="passwordError" class="error">{{ passwordError }}</span>
+        </div>
+        <button type="submit" class="btn-primary" :disabled="loading">
           {{ loading ? 'Přihlašuji…' : 'Přihlásit se' }}
         </button>
       </form>
@@ -108,6 +124,12 @@ form {
   gap: 10px;
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .input {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
@@ -118,6 +140,7 @@ form {
   width: 100%;
 }
 .input:focus { border-color: var(--color-primary); }
+.input-error { border-color: var(--color-danger) !important; }
 
 .error {
   font-size: 12px;
