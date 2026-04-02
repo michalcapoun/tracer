@@ -13,6 +13,7 @@ const notFound = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
 const nameError = ref('')
+const distanceError = ref('')
 const mapyLinkError = ref(false)
 
 function validateMapyLink(value: string): boolean {
@@ -55,8 +56,11 @@ watch(() => route.params.id, (id) => { if (id) loadTrip(id as string) })
 async function save() {
   if (!trip.value) return
   nameError.value = form.value.name.trim() ? '' : 'Název výletu je povinný.'
+  distanceError.value = form.value.total_distance_km !== '' && +form.value.total_distance_km <= 0
+    ? 'Vzdálenost musí být kladné číslo.'
+    : ''
   mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
-  if (nameError.value || mapyLinkError.value) return
+  if (nameError.value || distanceError.value || mapyLinkError.value) return
   saving.value = true
   try {
     const updates = {
@@ -126,10 +130,11 @@ function openInMapy() {
           </div>
           <div class="field">
             <label>Vzdálenost</label>
-            <div class="input-with-unit">
-              <input v-model="form.total_distance_km" type="number" step="0.1" min="0" max="9999" placeholder="—" class="input" />
+            <div class="input-with-unit" :class="{ 'input-error': distanceError }">
+              <input v-model="form.total_distance_km" type="number" step="0.1" min="0" max="9999" placeholder="—" class="input" @input="distanceError = ''" />
               <span class="unit">km</span>
             </div>
+            <span v-if="distanceError" class="error">{{ distanceError }}</span>
           </div>
         </div>
         <div class="field">
