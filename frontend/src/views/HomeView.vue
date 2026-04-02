@@ -136,7 +136,7 @@ async function signOut() {
           <button :class="['tab', { active: tab === 'trash' }]" @click="tab = 'trash'; search = ''; store.fetchTrash()">Smazané</button>
         </div>
       </div>
-      <div class="filters">
+      <div v-if="tab !== 'trash'" class="filters">
         <div class="search-wrap">
           <input v-model="search" class="search" type="text" placeholder="Hledat výlet…" />
           <button v-if="search" class="search-clear" @click="search = ''">Smazat</button>
