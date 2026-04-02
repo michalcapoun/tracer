@@ -14,6 +14,11 @@ const tab = ref<Tab>('planned')
 const search = ref('')
 const toast = ref<{ message: string; type: 'success' | 'danger' } | null>(null)
 const userEmail = ref('')
+const DEMO_EMAIL = 'tracer@demo.cz'
+const DEMO_TRIP_LIMIT = 50
+
+const isDemo = computed(() => userEmail.value === DEMO_EMAIL)
+const demoLimitReached = computed(() => isDemo.value && store.trips.length >= DEMO_TRIP_LIMIT)
 let toastTimer: ReturnType<typeof setTimeout>
 
 function showToast(message: string, type: 'success' | 'danger') {
@@ -112,10 +117,10 @@ async function signOut() {
 <template>
   <div class="page">
     <header class="top-bar">
-      <h1 class="logo">Tracer</h1>
+      <h1 class="logo">TRACER</h1>
       <div class="top-actions">
         <span v-if="userEmail" class="user-email">{{ userEmail }}</span>
-        <button class="btn-primary" @click="router.push('/trip/new')">+ Nový výlet</button>
+        <button class="btn-primary" :disabled="demoLimitReached" :data-tooltip="demoLimitReached ? `Demo účet: limit ${DEMO_TRIP_LIMIT} výletů` : undefined" @click="!demoLimitReached && router.push('/trip/new')">+ Nový výlet</button>
         <button class="btn-signout" @click="signOut">Odhlásit</button>
       </div>
     </header>
@@ -140,7 +145,7 @@ async function signOut() {
 
     <!-- Smazané -->
     <template v-else-if="tab === 'trash'">
-      <div v-if="store.trash.length === 0" class="empty">Smazané je prázdný.</div>
+      <div v-if="store.trash.length === 0" class="empty">Koš je prázdný.</div>
       <ul v-else class="trip-list">
         <li v-for="trip in store.trash" :key="trip.id" class="trip-card trash-card">
           <div class="trip-info">
@@ -179,7 +184,7 @@ async function signOut() {
           <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </button>
-          <button class="card-btn" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
+          <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
           <button class="card-btn danger" data-tooltip="Smazat" @click="removeTrip(trip)">
@@ -206,7 +211,7 @@ async function signOut() {
               <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </button>
-              <button class="card-btn" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
+              <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
               <button class="card-btn danger" data-tooltip="Smazat" @click="removeTrip(trip)">
@@ -275,6 +280,7 @@ async function signOut() {
   font-weight: 500;
 }
 .btn-primary:hover { background: var(--color-primary-hover); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; background: var(--color-primary); }
 
 .controls {
   display: flex;
