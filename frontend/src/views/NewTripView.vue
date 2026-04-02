@@ -57,7 +57,7 @@ async function save() {
       <h1 class="title">Nový výlet</h1>
     </header>
 
-    <form class="form" @submit.prevent="save">
+    <form class="form" novalidate @submit.prevent="save">
       <div class="field">
         <label>Link z Mapy.com</label>
         <input
