@@ -58,7 +58,7 @@ export const tripsApi = {
     return trip
   },
 
-  update: async (id: string, payload: Partial<Omit<Trip, 'id' | 'created_at' | 'waypoints'>>): Promise<void> => {
+  update: async (id: string, payload: Partial<Omit<Trip, 'id' | 'created_at'>>): Promise<void> => {
     const { error } = await supabase.from('trips').update(payload).eq('id', id)
     if (error) throw error
   },

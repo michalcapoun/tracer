@@ -102,12 +102,6 @@ supabase.auth.onAuthStateChange((event, session) => {
   color: var(--color-primary);
 }
 
-.desc {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  line-height: 1.5;
-}
-
 form {
   display: flex;
   flex-direction: column;

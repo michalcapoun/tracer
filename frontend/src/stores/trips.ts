@@ -9,14 +9,20 @@ export const useTripsStore = defineStore('trips', () => {
 
   async function fetchAll() {
     loading.value = true
-    trips.value = await tripsApi.getAll()
-    loading.value = false
+    try {
+      trips.value = await tripsApi.getAll()
+    } finally {
+      loading.value = false
+    }
   }
 
   async function fetchTrash() {
     loading.value = true
-    trash.value = await tripsApi.getTrash()
-    loading.value = false
+    try {
+      trash.value = await tripsApi.getTrash()
+    } finally {
+      loading.value = false
+    }
   }
 
   async function remove(id: string) {
