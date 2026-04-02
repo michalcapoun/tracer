@@ -46,7 +46,6 @@ onMounted(async () => {
   }
 })
 
-
 const isDirty = computed(() => {
   if (!trip.value) return false
   return (
@@ -86,19 +85,19 @@ async function duplicate() {
 
 async function deleteTrip() {
   if (!trip.value) return
-deleting.value = true
+  deleting.value = true
   const wasHistory = trip.value.date && trip.value.date <= new Date().toISOString().slice(0, 10)
-  await store.remove(trip.value.id)
-  router.push(wasHistory ? '/?tab=history&deleted=1' : '/?tab=planned&deleted=1')
+  try {
+    await store.remove(trip.value.id)
+    router.push(wasHistory ? '/?tab=history&deleted=1' : '/?tab=planned&deleted=1')
+  } finally {
+    deleting.value = false
+  }
 }
 
 function openInMapy() {
   if (!trip.value?.mapy_link) return
   window.open(trip.value.mapy_link, '_blank')
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 </script>
 

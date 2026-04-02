@@ -49,17 +49,20 @@ const filtered = computed(() => {
   const today = new Date().toISOString().slice(0, 10)
   const isPlanned = tab.value === 'planned'
   return store.trips
-    .filter((t: Trip) => {
+    .filter((t) => {
       const matchesTab = isPlanned ? (!t.date || t.date > today) : (!!t.date && t.date <= today)
       const q = search.value.trim().toLowerCase()
       const matchesSearch = !q || t.name.toLowerCase().includes(q)
       return matchesTab && matchesSearch
     })
-    .sort((a: Trip, b: Trip) => {
+    .sort((a, b) => {
       if (!a.date && !b.date) return a.name.localeCompare(b.name, 'cs')
       if (!a.date) return 1
       if (!b.date) return -1
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime()
+      // Planned: nearest date first (ascending); History: latest date first (descending)
+      const dateDiff = isPlanned
+        ? new Date(a.date).getTime() - new Date(b.date).getTime()
+        : new Date(b.date).getTime() - new Date(a.date).getTime()
       return dateDiff !== 0 ? dateDiff : a.name.localeCompare(b.name, 'cs')
     })
 })
@@ -94,10 +97,6 @@ async function permanentDeleteTrip(trip: Trip) {
 function daysLeft(deletedAt: string): number {
   const diff = 30 * 24 * 60 * 60 * 1000 - (Date.now() - new Date(deletedAt).getTime())
   return Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)))
-}
-
-async function duplicateTrip(trip: Trip) {
-  await store.duplicate(trip.id)
 }
 
 function openInMapy(trip: Trip) {
@@ -184,7 +183,7 @@ async function signOut() {
           <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </button>
-          <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
+          <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="store.duplicate(trip.id)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
           <button class="card-btn danger" data-tooltip="Smazat" @click="removeTrip(trip)">
@@ -211,7 +210,7 @@ async function signOut() {
               <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </button>
-              <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="duplicateTrip(trip)">
+              <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="store.duplicate(trip.id)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
               <button class="card-btn danger" data-tooltip="Smazat" @click="removeTrip(trip)">
