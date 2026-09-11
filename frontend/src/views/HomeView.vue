@@ -69,8 +69,9 @@ const filtered = computed(() => {
     })
 })
 
+// Planned trips render as one group without a year label.
 const groupedByYear = computed(() => {
-  if (tab.value !== 'history') return []
+  if (tab.value === 'planned') return [{ year: '', trips: filtered.value }]
   const groups: { year: string; trips: Trip[] }[] = []
   for (const trip of filtered.value) {
     const year = trip.date!.slice(0, 4)
@@ -171,43 +172,17 @@ async function signOut() {
       {{ search.trim() ? 'Žádný výlet neodpovídá vyhledávání.' : tab === 'planned' ? 'Žádné plánované výlety.' : 'Žádná historie výletů.' }}
     </div>
 
-    <!-- Plánované: flat list -->
-    <ul v-else-if="tab === 'planned'" class="trip-list">
-      <li v-for="trip in filtered" :key="trip.id" class="trip-card" @click="router.push(`/trip/${trip.id}`)">
-        <div class="trip-info">
-          <div class="trip-text">
-            <span class="trip-name">{{ trip.name }}</span>
-            <div class="trip-meta">
-              <span v-if="trip.date" class="trip-date">{{ formatDate(trip.date) }}</span>
-              <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
-            </div>
-          </div>
-        </div>
-        <div class="card-actions" @click.stop>
-          <button v-if="trip.mapy_link" class="card-btn" data-tooltip="Přeplánovat" @click="openInMapy(trip)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </button>
-          <button class="card-btn" :disabled="demoLimitReached" data-tooltip="Kopírovat" @click="store.duplicate(trip.id)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          </button>
-          <button class="card-btn danger" data-tooltip="Smazat" @click="removeTrip(trip)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-      </li>
-    </ul>
-
-    <!-- Historie: skupiny po letech -->
+    <!-- Plánované: jedna skupina bez roku; Historie: skupiny po letech -->
     <div v-else class="year-groups">
       <div v-for="group in groupedByYear" :key="group.year" class="year-group">
-        <div class="year-label">{{ group.year }}</div>
+        <div v-if="group.year" class="year-label">{{ group.year }}</div>
         <ul class="trip-list">
           <li v-for="trip in group.trips" :key="trip.id" class="trip-card" @click="router.push(`/trip/${trip.id}`)">
             <div class="trip-info">
               <div class="trip-text">
                 <span class="trip-name">{{ trip.name }}</span>
                 <div class="trip-meta">
-                  <span class="trip-date">{{ formatDate(trip.date!) }}</span>
+                  <span v-if="trip.date" class="trip-date">{{ formatDate(trip.date) }}</span>
                   <span v-if="trip.total_distance_km" class="badge">{{ trip.total_distance_km.toFixed(1) }} km</span>
                 </div>
               </div>
