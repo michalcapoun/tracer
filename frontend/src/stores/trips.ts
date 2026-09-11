@@ -54,7 +54,7 @@ export const useTripsStore = defineStore('trips', () => {
       date: original.date,
       total_distance_km: original.total_distance_km,
     })
-    await fetchAll()
+    trips.value.unshift(newTrip)
     return newTrip.id
   }
 
