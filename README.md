@@ -16,7 +16,6 @@ Personal trip archive. Save, organize and archive routes planned in [Mapy.com](h
 ## Stack
 
 - [Vue 3](https://vuejs.org) + TypeScript — UI framework
-- [Pinia](https://pinia.vuejs.org) — shared state management (trips, trash)
 - [Supabase](https://supabase.com) — PostgreSQL database + row-level auth
 - [Vite](https://vitejs.dev) — build tool
 - [Vercel](https://vercel.com) — hosting
