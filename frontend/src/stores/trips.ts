@@ -1,8 +1,7 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { tripsApi, type Trip } from '../lib/api'
 
-export const useTripsStore = defineStore('trips', () => {
+function createTripsStore() {
   const trips = ref<Trip[]>([])
   const trash = ref<Trip[]>([])
   const loading = ref(false)
@@ -59,4 +58,9 @@ export const useTripsStore = defineStore('trips', () => {
   }
 
   return { trips, trash, loading, fetchAll, fetchTrash, remove, restore, permanentDelete, duplicate }
-})
+}
+
+// One shared instance for the app; reactive() unwraps the refs just like Pinia did.
+const store = reactive(createTripsStore())
+
+export const useTripsStore = () => store
