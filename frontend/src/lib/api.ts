@@ -78,13 +78,3 @@ export const tripsApi = {
     if (error) throw error
   },
 }
-
-export const routeApi = {
-  optimize: async (waypoints: Array<{ lat: number; lng: number; name: string }>) => {
-    const { data, error } = await supabase.functions.invoke('route-proxy', {
-      body: { waypoints },
-    })
-    if (error) throw error
-    return data
-  },
-}
