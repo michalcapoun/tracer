@@ -64,18 +64,16 @@ const filtered = computed(() => {
       if (!a.date) return 1
       if (!b.date) return -1
       // Planned: nearest date first (ascending); History: latest date first (descending)
-      const dateDiff = isPlanned
-        ? new Date(a.date).getTime() - new Date(b.date).getTime()
-        : new Date(b.date).getTime() - new Date(a.date).getTime()
+      const dateDiff = isPlanned ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
       return dateDiff !== 0 ? dateDiff : a.name.localeCompare(b.name, 'cs')
     })
 })
 
 const groupedByYear = computed(() => {
   if (tab.value !== 'history') return []
-  const groups: { year: number; trips: Trip[] }[] = []
+  const groups: { year: string; trips: Trip[] }[] = []
   for (const trip of filtered.value) {
-    const year = new Date(trip.date!).getFullYear()
+    const year = trip.date!.slice(0, 4)
     const group = groups.find((g) => g.year === year)
     if (group) group.trips.push(trip)
     else groups.push({ year, trips: [trip] })
