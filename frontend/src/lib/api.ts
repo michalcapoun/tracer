@@ -10,6 +10,37 @@ export interface Trip {
   deleted_at?: string | null
 }
 
+export interface TripForm {
+  name: string
+  date: string
+  total_distance_km: number | ''
+  mapy_link: string
+}
+
+// Dated today or earlier = history; undated or future = planned.
+export function isPast(date?: string | null): boolean {
+  return !!date && date <= new Date().toISOString().slice(0, 10)
+}
+
+export function isMapyLink(value: string): boolean {
+  if (!value.trim()) return true
+  try {
+    const host = new URL(value.trim()).hostname
+    return host.endsWith('mapy.cz') || host.endsWith('mapy.com')
+  } catch {
+    return false
+  }
+}
+
+export function toTripPayload(form: TripForm) {
+  return {
+    name: form.name.trim(),
+    date: form.date || null,
+    total_distance_km: form.total_distance_km !== '' ? +form.total_distance_km : null,
+    mapy_link: form.mapy_link.trim() || null,
+  }
+}
+
 export const tripsApi = {
   getAll: async (): Promise<Trip[]> => {
     const { data, error } = await supabase

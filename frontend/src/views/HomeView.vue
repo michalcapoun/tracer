@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTripsStore } from '../stores/trips'
 import { supabase } from '../lib/supabase'
-import type { Trip } from '../lib/api'
+import { isPast, type Trip } from '../lib/api'
 
 type Tab = 'planned' | 'history' | 'trash'
 const router = useRouter()
@@ -50,11 +50,10 @@ onMounted(async () => {
 })
 
 const filtered = computed(() => {
-  const today = new Date().toISOString().slice(0, 10)
   const isPlanned = tab.value === 'planned'
   return store.trips
     .filter((t) => {
-      const matchesTab = isPlanned ? (!t.date || t.date > today) : (!!t.date && t.date <= today)
+      const matchesTab = isPlanned ? !isPast(t.date) : isPast(t.date)
       const q = search.value.trim().toLowerCase()
       const matchesSearch = !q || t.name.toLowerCase().includes(q)
       return matchesTab && matchesSearch

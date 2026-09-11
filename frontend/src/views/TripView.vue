@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { tripsApi, type Trip } from '../lib/api'
+import { tripsApi, isMapyLink, isPast, toTripPayload, type Trip, type TripForm } from '../lib/api'
 import { useTripsStore } from '../stores/trips'
 
 const route = useRoute()
@@ -16,20 +16,10 @@ const nameError = ref('')
 const distanceError = ref('')
 const mapyLinkError = ref(false)
 
-function validateMapyLink(value: string): boolean {
-  if (!value.trim()) return true
-  try {
-    const host = new URL(value.trim()).hostname
-    return host.endsWith('mapy.cz') || host.endsWith('mapy.com')
-  } catch {
-    return false
-  }
-}
-
-const form = ref({
+const form = ref<TripForm>({
   name: '',
   date: '',
-  total_distance_km: '' as number | '',
+  total_distance_km: '',
   mapy_link: '',
 })
 
@@ -59,20 +49,12 @@ async function save() {
   distanceError.value = form.value.total_distance_km !== '' && +form.value.total_distance_km <= 0
     ? 'Vzdálenost musí být kladné číslo.'
     : ''
-  mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
+  mapyLinkError.value = !isMapyLink(form.value.mapy_link)
   if (nameError.value || distanceError.value || mapyLinkError.value) return
   saving.value = true
   try {
-    const updates = {
-      name: form.value.name.trim(),
-      date: form.value.date || null,
-      total_distance_km: form.value.total_distance_km !== '' ? +form.value.total_distance_km : null,
-      mapy_link: form.value.mapy_link.trim() || null,
-    }
-    await tripsApi.update(trip.value.id, updates)
-    const today = new Date().toISOString().slice(0, 10)
-    const isHistory = !!updates.date && updates.date <= today
-    router.push(isHistory ? '/?tab=history' : '/?tab=planned')
+    await tripsApi.update(trip.value.id, toTripPayload(form.value))
+    router.push(isPast(form.value.date) ? '/?tab=history' : '/?tab=planned')
   } finally {
     saving.value = false
   }
@@ -87,7 +69,7 @@ async function duplicate() {
 async function deleteTrip() {
   if (!trip.value) return
   deleting.value = true
-  const wasHistory = trip.value.date && trip.value.date <= new Date().toISOString().slice(0, 10)
+  const wasHistory = isPast(trip.value.date)
   try {
     await store.remove(trip.value.id)
     router.push(wasHistory ? '/?tab=history&deleted=1' : '/?tab=planned&deleted=1')
@@ -103,7 +85,7 @@ async function deleteTrip() {
 
   <div v-else class="page">
     <header class="top-bar">
-      <button class="back" @click="router.push(trip.date && trip.date <= new Date().toISOString().slice(0, 10) ? '/?tab=history' : '/?tab=planned')">← Zpět</button>
+      <button class="back" @click="router.push(isPast(trip.date) ? '/?tab=history' : '/?tab=planned')">← Zpět</button>
       <div class="header-actions">
         <button class="btn-small" @click="duplicate">Kopírovat</button>
         <button class="btn-small danger" :disabled="deleting" @click="deleteTrip">Smazat</button>

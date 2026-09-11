@@ -1,49 +1,32 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { tripsApi } from '../lib/api'
+import { tripsApi, isMapyLink, isPast, toTripPayload, type TripForm } from '../lib/api'
 
 const router = useRouter()
 
-const form = ref({
+const form = ref<TripForm>({
   mapy_link: '',
   name: '',
   date: '',
-  total_distance_km: '' as number | '',
+  total_distance_km: '',
 })
 const saving = ref(false)
 const nameError = ref('')
 const distanceError = ref('')
 const mapyLinkError = ref(false)
 
-function validateMapyLink(value: string): boolean {
-  if (!value.trim()) return true
-  try {
-    const host = new URL(value.trim()).hostname
-    return host.endsWith('mapy.cz') || host.endsWith('mapy.com')
-  } catch {
-    return false
-  }
-}
-
 async function save() {
   nameError.value = form.value.name.trim() ? '' : 'Název výletu je povinný.'
   distanceError.value = form.value.total_distance_km !== '' && +form.value.total_distance_km <= 0
     ? 'Vzdálenost musí být kladné číslo.'
     : ''
-  mapyLinkError.value = !validateMapyLink(form.value.mapy_link)
+  mapyLinkError.value = !isMapyLink(form.value.mapy_link)
   if (nameError.value || distanceError.value || mapyLinkError.value) return
   saving.value = true
   try {
-    await tripsApi.create({
-      name: form.value.name.trim(),
-      mapy_link: form.value.mapy_link.trim() || null,
-      date: form.value.date || null,
-      total_distance_km: form.value.total_distance_km !== '' ? +form.value.total_distance_km : null,
-    })
-    const today = new Date().toISOString().slice(0, 10)
-    const isHistory = !!form.value.date && form.value.date <= today
-    router.push(isHistory ? '/?tab=history&created=1' : '/?tab=planned&created=1')
+    await tripsApi.create(toTripPayload(form.value))
+    router.push(isPast(form.value.date) ? '/?tab=history&created=1' : '/?tab=planned&created=1')
   } finally {
     saving.value = false
   }
