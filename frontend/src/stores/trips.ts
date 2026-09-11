@@ -1,27 +1,28 @@
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { tripsApi, type Trip } from '../lib/api'
 
 function createTripsStore() {
   const trips = ref<Trip[]>([])
   const trash = ref<Trip[]>([])
-  const loading = ref(false)
+  const pending = ref(0)
+  const loading = computed(() => pending.value > 0)
 
-  async function fetchAll() {
-    loading.value = true
+  // Counts in-flight fetches so parallel ones don't hide each other's indicator.
+  async function track<T>(request: Promise<T>): Promise<T> {
+    pending.value++
     try {
-      trips.value = await tripsApi.getAll()
+      return await request
     } finally {
-      loading.value = false
+      pending.value--
     }
   }
 
+  async function fetchAll() {
+    trips.value = await track(tripsApi.getAll())
+  }
+
   async function fetchTrash() {
-    loading.value = true
-    try {
-      trash.value = await tripsApi.getTrash()
-    } finally {
-      loading.value = false
-    }
+    trash.value = await track(tripsApi.getTrash())
   }
 
   async function remove(id: string) {
