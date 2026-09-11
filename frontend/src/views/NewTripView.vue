@@ -113,12 +113,6 @@ async function save() {
   margin-bottom: 32px;
 }
 
-.back {
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-.back:hover { color: var(--color-text); }
-
 .title {
   font-size: 20px;
   font-weight: 700;
@@ -135,17 +129,6 @@ async function save() {
   flex-direction: column;
   gap: 6px;
   flex: 1;
-}
-
-.field-row {
-  display: flex;
-  gap: 16px;
-}
-
-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-muted);
 }
 
 .required {
@@ -165,8 +148,6 @@ input[type="number"] {
   width: 100%;
 }
 input:focus { border-color: var(--color-primary); }
-.input-error { border-color: var(--color-danger) !important; }
-.error { font-size: 12px; color: var(--color-danger); }
 
 .input-with-unit {
   display: flex;
@@ -195,11 +176,6 @@ input:focus { border-color: var(--color-primary); }
   align-items: center;
 }
 
-.hint {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
@@ -210,6 +186,4 @@ input:focus { border-color: var(--color-primary); }
   text-align: center;
   margin-top: 4px;
 }
-.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
-.btn-primary:disabled { opacity: 0.5; cursor: default; }
 </style>

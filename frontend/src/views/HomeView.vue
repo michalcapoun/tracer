@@ -218,13 +218,6 @@ async function signOut() {
   margin-bottom: 24px;
 }
 
-.logo {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--color-primary);
-}
-
 .top-actions {
   display: flex;
   align-items: center;

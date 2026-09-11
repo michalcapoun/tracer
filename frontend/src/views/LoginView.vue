@@ -111,13 +111,6 @@ supabase.auth.onAuthStateChange((event, session) => {
   gap: 20px;
 }
 
-.logo {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--color-primary);
-}
-
 form {
   display: flex;
   flex-direction: column;
@@ -140,12 +133,6 @@ form {
   width: 100%;
 }
 .input:focus { border-color: var(--color-primary); }
-.input-error { border-color: var(--color-danger) !important; }
-
-.error {
-  font-size: 12px;
-  color: var(--color-danger);
-}
 
 .btn-primary {
   background: var(--color-primary);
@@ -156,8 +143,6 @@ form {
   font-weight: 500;
   text-align: center;
 }
-.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
-.btn-primary:disabled { opacity: 0.5; cursor: default; }
 
 .divider {
   text-align: center;

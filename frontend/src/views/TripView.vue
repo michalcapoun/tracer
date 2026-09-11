@@ -153,12 +153,6 @@ async function deleteTrip() {
   margin-bottom: 24px;
 }
 
-.back {
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-.back:hover { color: var(--color-text); }
-
 .header-actions {
   display: flex;
   gap: 8px;
@@ -198,22 +192,6 @@ async function deleteTrip() {
   flex: 1;
 }
 
-.field-row {
-  display: flex;
-  gap: 16px;
-}
-
-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.hint {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
 .input {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
@@ -224,8 +202,6 @@ label {
   width: 100%;
 }
 .input:focus { border-color: var(--color-primary); }
-.input-error { border-color: var(--color-danger) !important; }
-.error { font-size: 12px; color: var(--color-danger); }
 
 .input-with-unit {
   display: flex;
@@ -265,8 +241,6 @@ label {
   font-size: 14px;
   font-weight: 500;
 }
-.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
-.btn-primary:disabled { opacity: 0.5; cursor: default; }
 
 
 .btn-mapy {
