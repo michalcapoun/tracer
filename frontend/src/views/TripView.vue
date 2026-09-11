@@ -95,11 +95,6 @@ async function deleteTrip() {
     deleting.value = false
   }
 }
-
-function openInMapy() {
-  if (!trip.value?.mapy_link) return
-  window.open(trip.value.mapy_link, '_blank')
-}
 </script>
 
 <template>
@@ -148,9 +143,9 @@ function openInMapy() {
         <button class="btn-primary" :disabled="saving" @click="save">
           {{ saving ? 'Ukládám…' : 'Uložit změny' }}
         </button>
-        <button v-if="trip.mapy_link" class="btn-mapy" @click="openInMapy">
+        <a v-if="trip.mapy_link" class="btn-mapy" :href="trip.mapy_link" target="_blank" rel="noopener">
           Přeplánovat v Mapy.com →
-        </button>
+        </a>
       </div>
     </div>
   </div>
