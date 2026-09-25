@@ -1,26 +1,33 @@
 # Tracer
 
-Personal trip archive. Save, organize and archive routes planned in [Mapy.com](https://mapy.com).
+Osobní archiv výletů. Ukládá trasy naplánované na [Mapy.com](https://mapy.com)
+— název, datum, vzdálenost a odkaz zpět do Map.
 
-**Live:** https://tracer-six.vercel.app
+**Živá verze:** https://tracer-six.vercel.app
 
-## Features
+## Co umí
 
-- **Planned trips** — trips without a date or with a future date
-- **History** — past trips grouped by year
-- **Trash** — soft delete with automatic removal after 30 days
-- Store Mapy.com share links for quick re-planning
-- Duplicate trips
-- Search
+- **Plánované** — výlety bez data nebo s datem v budoucnu, nejbližší nahoře
+- **Historie** — proběhlé výlety seskupené podle roku
+- **Smazané** — koš: výlet jde 30 dní obnovit nebo trvale smazat, pak
+  z koše zmizí (v databázi zůstává)
+- Odkaz do Mapy.com pro přeplánování trasy
+- Kopírování výletu
+- Hledání podle názvu
 
-## Stack
+## Přihlášení
 
-- [Vue 3](https://vuejs.org) + TypeScript — UI framework
-- [Supabase](https://supabase.com) — PostgreSQL database + row-level auth
-- [Vite](https://vitejs.dev) — build tool
+- Email a heslo přes Supabase Auth, registrace v aplikaci není
+- Demo účet na přihlašovací stránce, s omezeným počtem výletů
+
+## Technologie
+
+- [Vue 3](https://vuejs.org) + TypeScript
+- [Supabase](https://supabase.com) — databáze PostgreSQL a přihlašování
+- [Vite](https://vite.dev) — build
 - [Vercel](https://vercel.com) — hosting
 
-## Local development
+## Lokální vývoj
 
 ```bash
 cd frontend
@@ -28,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Create `frontend/.env`:
+Vytvoř `frontend/.env` (vzor je v `.env.example`):
 
 ```
 VITE_SUPABASE_URL=...
@@ -37,7 +44,5 @@ VITE_DEMO_EMAIL=...
 VITE_DEMO_PASSWORD=...
 ```
 
-## Auth
-
-- Email and password login
-- Demo account for showcasing — available on the login page
+Demo proměnné potřebuje jen tlačítko demo účtu. `npm run build` pustí
+kontrolu typů a produkční build.
