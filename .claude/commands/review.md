@@ -1,4 +1,4 @@
-Review the entire codebase in /Users/michalcapoun/tracer and fix all issues found. Go through every source file and:
+Review the entire codebase in this repository and fix all issues found. Go through every source file and:
 
 1. **Unused code** — remove unused variables, imports, functions, and dead code branches.
 
